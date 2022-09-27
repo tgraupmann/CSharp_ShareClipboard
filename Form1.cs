@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+using System.Configuration;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using MyCoolCompany.Shuriken;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace CSharp_ShareClipboard
 {
@@ -52,13 +46,19 @@ namespace CSharp_ShareClipboard
 
         private void txtPath_TextChanged(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(txtPath.Text))
+            string path = txtPath.Text;
+            if (string.IsNullOrEmpty(path))
             {
                 _mPath = string.Empty;
             }
             else
             {
-                _mPath = txtPath.Text;
+                _mPath = path;
+
+                if (Directory.Exists(_mPath))
+                {
+                    AddOrUpdateAppSettings("Path", _mPath);
+                }
             }
             UpdateUI();
         }
@@ -255,16 +255,56 @@ namespace CSharp_ShareClipboard
                     _mPath = dialog.FileName;
                 }
                 txtPath.Text = _mPath;
+
+                if (Directory.Exists(_mPath))
+                {
+                    AddOrUpdateAppSettings("Path", _mPath);
+                }
+
                 UpdateUI();
             }            
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            _mPath = Directory.GetCurrentDirectory();
-            txtPath.Text = _mPath;
+            string path = ConfigurationManager.AppSettings["Path"];
+            if (string.IsNullOrEmpty(path))
+            {
+                path = Directory.GetCurrentDirectory();
+            }
+
+            _mPath = path;
+            txtPath.Text = path;
 
             UpdateUI();
+        }
+
+        /// <summary>
+        /// Ref: https://stackoverflow.com/questions/5274829/configurationmanager-appsettings-how-to-modify-and-save
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        public static void AddOrUpdateAppSettings(string key, string value)
+        {
+            try
+            {
+                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                var settings = configFile.AppSettings.Settings;
+                if (settings[key] == null)
+                {
+                    settings.Add(key, value);
+                }
+                else
+                {
+                    settings[key].Value = value;
+                }
+                configFile.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
+            }
+            catch (ConfigurationErrorsException)
+            {
+                Console.WriteLine("Error writing app settings");
+            }
         }
     }
 }
