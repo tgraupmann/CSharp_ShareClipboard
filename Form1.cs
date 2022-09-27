@@ -69,12 +69,17 @@ namespace CSharp_ShareClipboard
             return (byte[])converter.ConvertTo(img, typeof(byte[]));
         }
 
+        private string GetClipboardPath()
+        {
+            return _mPath + Path.DirectorySeparatorChar + "clipboard.data";
+        }
+
         private void btnWrite_Click(object sender, EventArgs e)
         {
             try
             {
-                string path = _mPath + Path.DirectorySeparatorChar + "clipboard.data";
-                using (FileStream fs = File.Open(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read))
+                string path = GetClipboardPath();
+                using (FileStream fs = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read))
                 {
                     using (BinaryWriter bw = new BinaryWriter(fs))
                     {
@@ -95,6 +100,7 @@ namespace CSharp_ShareClipboard
                                 {
                                     string str = obj as string;
                                     bw.Write(str.GetType().ToString());
+                                    bw.Write(str);
 
                                     lblStatus.Text = "Status: Write String";
                                 }
@@ -154,7 +160,7 @@ namespace CSharp_ShareClipboard
 
             try
             {
-                string path = _mPath + Path.DirectorySeparatorChar + "clipboard.data";
+                string path = GetClipboardPath();
                 using (FileStream fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     using (BinaryReader br = new BinaryReader(fs))
@@ -178,45 +184,47 @@ namespace CSharp_ShareClipboard
                                 continue;
                             }
 
-                            UInt64 length = br.ReadUInt64();
-                            byte[] bytes = br.ReadBytes((int)length);
-
                             if (format == "System.String")
                             {
                                 string strString = br.ReadString();
-                                
+
                                 Clipboard.SetText(strString);
                                 lblStatus.Text = "Status: Read String";
                                 return;
                             }
-
-                            else if (format == "System.Drawing.Bitmap")
+                            else
                             {
-                                using (MemoryStream ms = new MemoryStream())
-                                {
-                                    ms.Write(bytes, 0, bytes.Length);
-                                    ms.Flush();
-                                    ms.Position = 0;
-                                    Bitmap bitmap = (Bitmap)Bitmap.FromStream(ms);
+                                UInt64 length = br.ReadUInt64();
+                                byte[] bytes = br.ReadBytes((int)length);
 
-                                    Clipboard.SetData(format, bitmap);
-                                    lblStatus.Text = "Status: Read Bitmap";
-                                    return;
+                                if (format == "System.Drawing.Bitmap")
+                                {
+                                    using (MemoryStream ms = new MemoryStream())
+                                    {
+                                        ms.Write(bytes, 0, bytes.Length);
+                                        ms.Flush();
+                                        ms.Position = 0;
+                                        Bitmap bitmap = (Bitmap)Bitmap.FromStream(ms);
+
+                                        Clipboard.SetData(format, bitmap);
+                                        lblStatus.Text = "Status: Read Bitmap";
+                                        return;
+                                    }
+
                                 }
 
-                            }
-
-                            else if (format == "System.IO.MemoryStream")
-                            {
-                                using (MemoryStream ms = new MemoryStream())
+                                else if (format == "System.IO.MemoryStream")
                                 {
-                                    ms.Write(bytes, 0, bytes.Length);
-                                    ms.Flush();
-                                    ms.Position = 0;
+                                    using (MemoryStream ms = new MemoryStream())
+                                    {
+                                        ms.Write(bytes, 0, bytes.Length);
+                                        ms.Flush();
+                                        ms.Position = 0;
 
-                                    Clipboard.SetData(format, ms);
-                                    lblStatus.Text = "Status: Read MemoryStream";
-                                    return;
+                                        Clipboard.SetData(format, ms);
+                                        lblStatus.Text = "Status: Read MemoryStream";
+                                        return;
+                                    }
                                 }
                             }
                         }
