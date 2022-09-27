@@ -91,13 +91,20 @@ namespace CSharp_ShareClipboard
                                 }
 
                                 byte[] bytes = null;
-                                if (obj is Bitmap)
+                                if (obj is string)
+                                {
+                                    string str = obj as string;
+                                    bw.Write(str.GetType().ToString());
+
+                                    lblStatus.Text = "Status: Write String";
+                                }
+                                else if (obj is Bitmap)
                                 {
                                     Bitmap bitmap = obj as Bitmap;
                                     bw.Write(bitmap.GetType().ToString());
                                     bytes = ImageToByte(bitmap);
 
-                                    lblStatus.Text = "Status: Copied bitmap";
+                                    lblStatus.Text = "Status: Write Bitmap";
                                 }
                                 else if (obj is MemoryStream)
                                 {
@@ -108,7 +115,7 @@ namespace CSharp_ShareClipboard
                                         bytes = br.ReadBytes((int)ms.Length);
                                     }
 
-                                    lblStatus.Text = "Status: Copied memory stream";
+                                    lblStatus.Text = "Status: Write MemoryStream";
                                 }
 
                                 if (bytes == null)
@@ -160,6 +167,7 @@ namespace CSharp_ShareClipboard
                             string format = br.ReadString();
                             switch (format)
                             {
+                                case "System.String":
                                 case "System.Drawing.Bitmap":
                                 case "System.IO.MemoryStream":
                                     isSupported = true;
@@ -173,7 +181,16 @@ namespace CSharp_ShareClipboard
                             UInt64 length = br.ReadUInt64();
                             byte[] bytes = br.ReadBytes((int)length);
 
-                            if (format == "System.Drawing.Bitmap")
+                            if (format == "System.String")
+                            {
+                                string strString = br.ReadString();
+                                
+                                Clipboard.SetText(strString);
+                                lblStatus.Text = "Status: Read String";
+                                return;
+                            }
+
+                            else if (format == "System.Drawing.Bitmap")
                             {
                                 using (MemoryStream ms = new MemoryStream())
                                 {
@@ -183,7 +200,7 @@ namespace CSharp_ShareClipboard
                                     Bitmap bitmap = (Bitmap)Bitmap.FromStream(ms);
 
                                     Clipboard.SetData(format, bitmap);
-                                    lblStatus.Text = "Status: Read image";
+                                    lblStatus.Text = "Status: Read Bitmap";
                                     return;
                                 }
 
@@ -198,7 +215,7 @@ namespace CSharp_ShareClipboard
                                     ms.Position = 0;
 
                                     Clipboard.SetData(format, ms);
-                                    lblStatus.Text = "Status: Read Memorystream";
+                                    lblStatus.Text = "Status: Read MemoryStream";
                                     return;
                                 }
                             }
