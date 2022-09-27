@@ -112,7 +112,7 @@ namespace CSharp_ShareClipboard
 
                                     lblStatus.Text = "Status: Write Bitmap";
                                 }
-                                else if (obj is MemoryStream)
+                                else if (false && obj is MemoryStream)
                                 {
                                     MemoryStream ms = obj as MemoryStream;
                                     using (BinaryReader br = new BinaryReader(ms))
@@ -175,7 +175,7 @@ namespace CSharp_ShareClipboard
                             {
                                 case "System.String":
                                 case "System.Drawing.Bitmap":
-                                case "System.IO.MemoryStream":
+                                //case "System.IO.MemoryStream":
                                     isSupported = true;
                                     break;
                             }
