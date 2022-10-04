@@ -53,7 +53,7 @@ namespace CSharp_ShareClipboard
             }
             else
             {
-                _mPath = path;
+                _mPath = path.Trim();
 
                 if (Directory.Exists(_mPath))
                 {
@@ -252,7 +252,7 @@ namespace CSharp_ShareClipboard
                 }
                 else
                 {
-                    _mPath = dialog.FileName;
+                    _mPath = dialog.FileName.Trim();
                 }
                 txtPath.Text = _mPath;
 
@@ -273,7 +273,7 @@ namespace CSharp_ShareClipboard
                 path = Directory.GetCurrentDirectory();
             }
 
-            _mPath = path;
+            _mPath = path.Trim();
             txtPath.Text = path;
 
             UpdateUI();
